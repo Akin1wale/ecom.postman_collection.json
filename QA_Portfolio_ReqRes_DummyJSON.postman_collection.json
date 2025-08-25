@@ -1,0 +1,202 @@
+{
+  "info": {
+    "name": "QA Portfolio \u2013 ReqRes + DummyJSON",
+    "_postman_id": "11111111-2222-3333-4444-555555555555",
+    "description": "End-to-end API testing collection for QA portfolio: ReqRes (auth/login + users) and DummyJSON (products). Includes environment variables, test scripts, and saved values for chaining.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "ReqRes",
+      "item": [
+        {
+          "name": "Login \u2013 Success (200, token saved)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{reqres_email}}\",\n  \"password\": \"{{reqres_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{reqres_base}}/login",
+              "host": [
+                "{{reqres_base}}"
+              ],
+              "path": [
+                "login"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Token exists', () => pm.expect(json).to.have.property('token'));",
+                  "pm.environment.set('reqres_token', json.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login \u2013 Fail (400, error message)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{reqres_email}}\"\n}"
+            },
+            "url": {
+              "raw": "{{reqres_base}}/login",
+              "host": [
+                "{{reqres_base}}"
+              ],
+              "path": [
+                "login"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+                  "const json = pm.response.json();",
+                  "pm.test('Contains error message', () => pm.expect(json).to.have.property('error'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Users \u2013 Page 2 (schema & pagination)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{reqres_base}}/users?page=2",
+              "host": [
+                "{{reqres_base}}"
+              ],
+              "path": [
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "2"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Page is 2', () => pm.expect(json.page).to.eql(2));",
+                  "if (json.data && json.data.length > 0) { pm.environment.set('reqres_user_id', json.data[0].id); }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "DummyJSON",
+      "item": [
+        {
+          "name": "Products \u2013 Search (q)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{dummy_base}}/products/search?q={{search_query}}",
+              "host": [
+                "{{dummy_base}}"
+              ],
+              "path": [
+                "products",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{search_query}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (json.products && json.products.length > 0) {",
+                  "  pm.environment.set('productId', json.products[0].id);",
+                  "  pm.environment.set('productPrice', json.products[0].price);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Products \u2013 Get by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{dummy_base}}/products/{{productId}}",
+              "host": [
+                "{{dummy_base}}"
+              ],
+              "path": [
+                "products",
+                "{{productId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Product id matches env var', () => {",
+                  "  const envId = parseInt(pm.environment.get('productId'), 10);",
+                  "  pm.expect(json.id).to.eql(envId);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
